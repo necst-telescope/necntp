@@ -2,6 +2,7 @@ import time
 import ntplib
 import struct
 import sysv_ipc
+from .devices import Nitsuki
 
 # 共有メモリのキー (NTP0に対応)
 SHM_KEY = 0x4E545030
@@ -16,25 +17,42 @@ def get_ntp_time(ntp_server="pool.ntp.org"):
         return response, time.time()
     except:
         return None, None
-
-def write_to_shared_memory():
+    
+def get_gps_time():
+    gps = Nitsuki()
+    return gps.get_current_datetime(), time.time()
+    
+def write_to_shared_memory(mode="GPS"):
     try:
         # 共有メモリを作成または取得
         shm = sysv_ipc.SharedMemory(SHM_KEY, sysv_ipc.IPC_CREAT | 0o666, size=struct.calcsize(STRUCT_FORMAT))
     except sysv_ipc.ExistentialError:
         shm = sysv_ipc.SharedMemory(SHM_KEY)
 
-    while True:
-        ntp_response, local_time = get_ntp_time()
-        if ntp_response is None:
-            print("NTP時刻の取得に失敗しました。再試行します...")
-            time.sleep(1)
-            continue
+    if mode = "NTP":
+        while True:
+            ntp_response, local_time = get_ntp_time()
+            if ntp_response is None:
+                print("NTP時刻の取得に失敗しました。再試行します...")
+                time.sleep(1)
+                continue
 
-        ntp_time = ntp_response.tx_time
-        ntp_sec, ntp_frac = divmod(ntp_time, 1)
-        local_sec, local_frac = divmod(local_time, 1)
+            ntp_time = ntp_response.tx_time
+            ntp_sec, ntp_frac = divmod(ntp_time, 1)
+            local_sec, local_frac = divmod(local_time, 1)
 
+            
+    elif mode = "GPS":
+        while True:
+            gps_response, local_time = get_ntp_time()
+            if gps_response is None:
+                print("GPS時刻の取得に失敗しました。再試行します...")
+                time.sleep(1)
+                continue
+
+            gps_time = gps_response.tx_time
+            gps_sec, gps_frac = divmod(gps_time, 1)
+            local_sec, local_frac = divmod(local_time, 1)
         # データを準備
         data = struct.pack(STRUCT_FORMAT,
             0,  # mode
