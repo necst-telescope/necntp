@@ -1,14 +1,12 @@
-
 import time
 import subprocess
 import pyinterface
-
+from datetime import datetime, timezone
 
 class Nitsuki7651(object):
     def __init__(self):
         self.dio1 = pyinterface.open(2702, 0)
-        pass
-        
+
     def get_current_datetime(self):
         d1 = self.dio1.input_dword('IN1_32')
         d2 = self.dio1.input_dword('IN33_64')
@@ -66,51 +64,13 @@ class Nitsuki7651(object):
                ((d >> 45) & 0x01) * 200 +\
                ((d >> 46) & 0x01) * 800
         
-        return {'year': yy,
-                'month': month,
-                'day': day,
-                'hour': hour,
-                'min': minute,
-                'sec': sec,
-                'msec': msec}
+        # Create datetime object with UTC timezone
+        dt = datetime(yy, month, day, hour, minute, sec, msec * 1000, tzinfo=timezone.utc)
+        unix_timestamp = dt.timestamp()
         
-    
-    def sync_system_time(self):
-        done = False
-        t1 = time.time()
-        
-        while True:
-            timestamp = self.get_current_datetime()
-            
-            if timestamp['msec'] == 0:
-                if not done:
-                    t2 = time.time()
-                    dt = (1 - (t2 - t1)) * 1000
-                    t1 = time.time()
-                    
-                    ts = '{year:04d}-{month:02d}-{day:02d} {hour:02d}:{min:02d}:{sec:02d}'.format(**timestamp)
-                    
-                    if (timestamp['sec'] % 10) == 0:
-                        cmd = ['date', '-s', ts]
-                        subprocess.run(cmd, stdout=subprocess.PIPE)
-                        msg = '* ' + ts + ' (delta: {dt:5.2f} ms)'.format(dt=dt)                        
-                        
-                    else:
-                        msg = '  ' + ts + ' (delta: {dt:5.2f} ms)'.format(dt=dt)                        
-                        pass
-                    
-                    print(msg)
-                    done = True
-                    
-                else:
-                    pass
-                
-            else:
-                done = False
-                pass
-            
-            time.sleep(0.0001)
-            continue
-        
+        return unix_timestamp
 
 
+if __name__ = "__main__":
+    nitsuki = Nitsuki7651()
+    print(nitsuki.get_current_datetime())
