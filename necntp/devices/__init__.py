@@ -1,1 +1,1 @@
-from nitsuki7615 import *
+from .nitsuki7651 import *

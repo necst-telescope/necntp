@@ -2,7 +2,7 @@ import time
 import ntplib
 import struct
 import sysv_ipc
-from .devices import Nitsuki
+from devices import Nitsuki
 
 # 共有メモリのキー (NTP0に対応)
 SHM_KEY = 0x4E545030
@@ -22,14 +22,14 @@ def get_gps_time():
     gps = Nitsuki()
     return gps.get_current_datetime(), time.time()
     
-def write_to_shared_memory(mode="GPS"):
+def write_to_shared_memory(mode="NTP"):
     try:
         # 共有メモリを作成または取得
         shm = sysv_ipc.SharedMemory(SHM_KEY, sysv_ipc.IPC_CREAT | 0o666, size=struct.calcsize(STRUCT_FORMAT))
     except sysv_ipc.ExistentialError:
         shm = sysv_ipc.SharedMemory(SHM_KEY)
 
-    if mode = "NTP":
+    if mode == "NTP":
         while True:
             ntp_response, local_time = get_ntp_time()
             if ntp_response is None:
@@ -42,7 +42,7 @@ def write_to_shared_memory(mode="GPS"):
             local_sec, local_frac = divmod(local_time, 1)
 
             
-    elif mode = "GPS":
+    elif mode == "GPS":
         while True:
             gps_response, local_time = get_ntp_time()
             if gps_response is None:

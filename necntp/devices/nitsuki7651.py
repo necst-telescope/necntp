@@ -71,6 +71,6 @@ class Nitsuki7651(object):
         return unix_timestamp
 
 
-if __name__ = "__main__":
+if __name__ == "__main__":
     nitsuki = Nitsuki7651()
     print(nitsuki.get_current_datetime())
